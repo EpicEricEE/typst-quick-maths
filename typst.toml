@@ -5,6 +5,6 @@ entrypoint = "src/lib.typ"
 authors = ["Eric Biedert"]
 license = "MIT"
 description = "Custom shorthands for math equations."
-repository = "https://github.com/EpicEricEE/typst-plugins"
+repository = "https://github.com/EpicEricEE/typst-quick-maths"
 exclude = ["README.md", "assets"]
 categories = ["utility"]
