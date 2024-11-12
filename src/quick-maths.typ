@@ -1,29 +1,29 @@
 // Element function for sequences
-#let sequence = $a b$.body.func()
+#let sequence = [].func()
 
 // Convert content to an array of its children
 #let to-children(content) = {
-  if type(content) == str {
-    content.clusters().map(char => [#char])
-  } else if content.has("children") {
+  if type(content) in (str, symbol) {
+    str(content).clusters().map(char => [#char])
+  } else if content.func() == sequence {
     content.children
-  } else if content.has("text") {
+  } else if content.func() == text {
     to-children(content.text)
   } else if content.func() == math.equation {
     to-children(content.body)
+  } else {
+    (content,)
   }
 }
 
 // Convert shorthands in the given sequence to their respective replacements.
 #let convert-sequence(seq, shorthands) = {
   let is-sequence = type(seq) == content and seq.func() == sequence
-  if not is-sequence { return seq }
-  
-  let children = seq.children.map(c => convert-sequence(c, shorthands))
-  if children.len() == 0 {
+  if not is-sequence or seq.children.len() == 0 {
     return seq
   }
   
+  let children = seq.children.map(c => convert-sequence(c, shorthands))
   for shorthand in shorthands {
     let components = to-children(shorthand.first())
     let start = 0
@@ -32,21 +32,21 @@
       let pos = children.slice(start).position(c => c == components.first())
       if pos == none {
         break
-      } else {
-        pos = start + pos // Position of first matching character
-        start = pos + 1 // Start index for finding next match 
+      }
 
-        // Check whether all components of the shorthand match
-        let matches = range(components.len()).all(i => {
-          let child = children.at(pos+i, default: none)
-          child == components.at(i)
-        })
-        
-        if matches {
-          // Remove shorthand and insert replacement
-          for i in range(components.len()) { children.remove(pos) }
-          children.insert(pos, shorthand.last())
-        }
+      pos = start + pos // Position of first matching character
+      start = pos + 1 // Start index for finding next match 
+
+      // Check whether all components of the shorthand match
+      let matches = range(components.len()).all(i => {
+        let child = children.at(pos+i, default: none)
+        child == components.at(i)
+      })
+      
+      if matches {
+        // Remove shorthand and insert replacement
+        for i in range(components.len()) { children.remove(pos) }
+        children.insert(pos, shorthand.last())
       }
     }
   }
@@ -70,7 +70,55 @@
       if new != seq { new } else { seq }
     }
 
-    eq
+    // Apply single-element shorthands as show rules, so that they are also
+    // applied to non-sequence elements.
+    shorthands.fold(eq, (acc, (shorthand, replacement)) => {
+      let string = if type(shorthand) in (str, symbol) {
+        str(shorthand)
+      } else if type(shorthand) != content {
+        return acc
+      } else if shorthand.func() == text {
+        shorthand.text
+      } else if shorthand.func() == math.equation and shorthand.body.func() == text {
+        shorthand.body.text
+      } else if shorthand.func() == sequence {
+        return acc
+      }
+
+      if string == none {
+        // Shorthand cannot be converted to a string, so try to match it directly.
+        if shorthand.func() == math.equation and shorthand.body.func() != sequence {
+          let func = shorthand.body.func()
+          let filter = shorthand.body.fields()
+
+          show func.where(..filter): it => {
+            // If the element contains more content that was needed for the
+            // match (e.g. attachments), it should be added back to the
+            // replacement.
+            let fields = it.fields()
+            let remaining = fields.pairs()
+              .filter(((key, val)) => key not in filter)
+              .fold((:), (acc, (key, val)) => acc + ((key): val))
+
+            if remaining.values().any(v => type(v) == content) {
+              func(replacement, ..remaining)
+            } else {
+              replacement
+            }
+          }
+
+          acc
+        } else {
+          acc
+        }
+      } else {
+        // Escape regex special characters.
+        string = string.replace(regex("[-\[\]{}()*+?.,\\\\^$|#\\s]"), it => "\\" + it.text)
+
+        show regex("^" + string + "$"): replacement
+        acc
+      }
+    })
   }
 
   body
