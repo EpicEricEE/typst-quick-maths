@@ -23,7 +23,7 @@
     return seq
   }
   
-  let children = seq.children.map(c => convert-sequence(c, shorthands))
+  let children = seq.children
   for shorthand in shorthands {
     let components = to-children(shorthand.first())
     let start = 0
