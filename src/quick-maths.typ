@@ -24,16 +24,14 @@
   }
   
   let children = seq.children
-  for shorthand in shorthands {
-    let components = to-children(shorthand.first())
+  for (shorthand, replacement) in shorthands {
+    let components = to-children(shorthand)
     let start = 0
     
     while start < children.len() {
-      let pos = children.slice(start).position(c => c == components.first())
-      if pos == none {
-        // Start could still be in the denominator of a fraction.
-        pos = children.slice(start).position(c => c.func() == math.frac)
-      }
+      let pos = children.slice(start).position(c => {
+        c == components.first() or c.func() == math.frac
+      })
 
       if pos == none {
         break
@@ -62,6 +60,9 @@
         }
         
         if child == components.at(i) {
+          // Next match could start in the denominator of the same fraction, so
+          // revert the start index to include the current index.
+          start -= 1
           continue
         }
 
@@ -93,8 +94,8 @@
       if matches {
         // Remove shorthand and insert replacement
         for i in range(components.len()) { children.remove(pos) }
-        let replacement = shorthand.last()
-        
+        let replacement = replacement
+
         // Add back attachments.
         if attachments != none {
           replacement = math.attach(replacement, ..attachments)
@@ -160,10 +161,10 @@
             // replacement.
             let fields = it.fields()
             let remaining = fields.pairs()
-              .filter(((key, val)) => key not in filter)
+              .filter(((key, val)) => key not in filter and type(val) == content)
               .fold((:), (acc, (key, val)) => acc + ((key): val))
 
-            if remaining.values().any(v => type(v) == content) {
+            if remaining != (:) {
               func(replacement, ..remaining)
             } else {
               replacement
