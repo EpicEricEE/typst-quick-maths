@@ -38,15 +38,40 @@
       start = pos + 1 // Start index for finding next match 
 
       // Check whether all components of the shorthand match
-      let matches = range(components.len()).all(i => {
+      let matches = true
+      let attachments = none
+      for i in range(components.len()) {
         let child = children.at(pos+i, default: none)
-        child == components.at(i)
-      })
+        if child == components.at(i) {
+          continue
+        }
+
+        // Try last one without attachments, as they can be added back later.
+        let is-last = i == components.len() - 1
+        if is-last and child != none and child.func() == math.attach {
+          let fields = child.fields()
+          let base = fields.remove("base")
+          child = child.base
+          attachments = fields
+        }
+
+        if child != components.at(i) {
+          matches = false
+          break
+        }
+      }
       
       if matches {
         // Remove shorthand and insert replacement
         for i in range(components.len()) { children.remove(pos) }
-        children.insert(pos, shorthand.last())
+
+        // Add back attachments.
+        let replacement = shorthand.last()
+        if attachments != none {
+          replacement = math.attach(replacement, ..attachments)
+        }
+
+        children.insert(pos, replacement)
       }
     }
   }
