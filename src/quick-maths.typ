@@ -31,6 +31,11 @@
     while start < children.len() {
       let pos = children.slice(start).position(c => c == components.first())
       if pos == none {
+        // Start could still be in the denominator of a fraction.
+        pos = children.slice(start).position(c => c.func() == math.frac)
+      }
+
+      if pos == none {
         break
       }
 
@@ -40,14 +45,38 @@
       // Check whether all components of the shorthand match
       let matches = true
       let attachments = none
+      let frac-fields = none
       for i in range(components.len()) {
         let child = children.at(pos+i, default: none)
         if child == components.at(i) {
           continue
         }
 
-        // Try last one without attachments, as they can be added back later.
         let is-last = i == components.len() - 1
+
+        // Try last one with only numerator.
+        if is-last and child != none and child.func() == math.frac {
+          let (num, denom) = child.fields()
+          child = num
+          frac-fields = (denom: denom)
+        }
+        
+        if child == components.at(i) {
+          continue
+        }
+
+        // Try first one with only denominator.
+        if i == 0 and child != none and child.func() == math.frac {
+          let (num, denom) = child.fields()
+          child = denom
+          frac-fields = (num: num)
+        }
+
+        if child == components.at(i) {
+          continue
+        }
+        
+        // Try last one without attachments.
         if is-last and child != none and child.func() == math.attach {
           let fields = child.fields()
           let base = fields.remove("base")
@@ -64,11 +93,20 @@
       if matches {
         // Remove shorthand and insert replacement
         for i in range(components.len()) { children.remove(pos) }
-
-        // Add back attachments.
         let replacement = shorthand.last()
+        
+        // Add back attachments.
         if attachments != none {
           replacement = math.attach(replacement, ..attachments)
+        }
+
+        // Put back in denominator or numerator if needed.
+        if frac-fields != none {
+          replacement = if "num" in frac-fields {
+            math.frac(frac-fields.num, replacement)
+          } else {
+            math.frac(replacement, frac-fields.denom)
+          }
         }
 
         children.insert(pos, replacement)
