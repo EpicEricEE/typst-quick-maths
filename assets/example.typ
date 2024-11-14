@@ -5,6 +5,7 @@
   width: 8cm,
   height: auto,
   margin: 1em,
+  fill: none,
   background: pad(0.5pt, box(
     width: 100%,
     height: 100%,

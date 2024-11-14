@@ -27,7 +27,7 @@ As the implementation of these features is quite hacky, you may encounter some e
 ## Example
 
 ```typ
-#import "@preview/quick-maths:0.1.0": shorthands
+#import "@preview/quick-maths:0.2.0": shorthands
 
 #show: shorthands.with(
   ($+-$, $plus.minus$),
