@@ -17,7 +17,7 @@
 
 #show: shorthands.with(
   ($+-$, $plus.minus$),
-  ($|-$, $tack$),
+  ($|-$, math.tack),
   ($<=$, math.arrow.l.double) // Replaces '≤'
 )
 

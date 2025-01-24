@@ -30,7 +30,7 @@
     
     while start < children.len() {
       let pos = children.slice(start).position(c => {
-        c == components.first() or c.func() == math.frac
+        c == components.first() or [#c].func() == math.frac
       })
 
       if pos == none {
@@ -53,7 +53,7 @@
         let is-last = i == components.len() - 1
 
         // Try last one with only numerator.
-        if is-last and child != none and child.func() == math.frac {
+        if is-last and child != none and [#child].func() == math.frac {
           let (num, denom) = child.fields()
           child = num
           frac-fields = (denom: denom)
@@ -67,7 +67,7 @@
         }
 
         // Try first one with only denominator.
-        if i == 0 and child != none and child.func() == math.frac {
+        if i == 0 and child != none and [#child].func() == math.frac {
           let (num, denom) = child.fields()
           child = denom
           frac-fields = (num: num)
@@ -78,7 +78,7 @@
         }
         
         // Try last one without attachments.
-        if is-last and child != none and child.func() == math.attach {
+        if is-last and child != none and [#child].func() == math.attach {
           let fields = child.fields()
           let base = fields.remove("base")
           child = child.base
