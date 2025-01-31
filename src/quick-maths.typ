@@ -93,7 +93,9 @@
       
       if matches {
         // Remove shorthand and insert replacement
-        for i in range(components.len()) { children.remove(pos) }
+        for i in range(components.len()) {
+          let _ = children.remove(pos)
+        }
         let replacement = replacement
 
         // Add back attachments.
