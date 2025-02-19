@@ -146,7 +146,9 @@
       } else if shorthand.func() == text {
         shorthand.text
       } else if shorthand.func() == math.equation and shorthand.body.func() == text {
-        shorthand.body.text
+        if shorthand.body.text.len() > 1 or sys.version < version(0, 13) {
+          shorthand.body.text
+        }
       } else if shorthand.func() == sequence {
         return acc
       }
