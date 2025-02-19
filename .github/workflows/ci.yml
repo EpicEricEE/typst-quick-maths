@@ -23,15 +23,14 @@ jobs:
           packages: cargo
           version: 1.0
 
-      - name: Install typst-test from GitHub
+      - name: Install tytanic from crates.io
         uses: baptiste0928/cargo-install@v3
         with:
-          crate: typst-test
-          git: https://github.com/tingerrr/typst-test.git
-          tag: ci-semi-stable
+          crate: tytanic
+          version: 0.2
 
       - name: Setup typst
         uses: typst-community/setup-typst@v3
 
       - name: Run test suite
-        run: typst-test run
+        run: tt run --no-fail-fast
